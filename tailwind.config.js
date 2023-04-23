@@ -6,17 +6,10 @@ module.exports = {
 		"./components/**/*.{js,ts,jsx,tsx}",
 		"./modules/**/*.{js,ts,jsx,tsx}",
 		"./utils/**/*.{js,ts,jsx,tsx}",
-		"./Admin/**/*.{js,ts,jsx,tsx}",
 	],
 	darkMode: false, // or 'media' or 'class'
 	theme: {
 		colors: {
-			blackBg: "rgb(2, 2, 2)",
-			grayBlack: "rgb(20, 20, 20)",
-			black: "rgb(0, 0, 0)",
-			blackShade: "#0b0b0b",
-			transparent: colors.transparent,
-			whiteText: "rgb(230, 230, 230)",
 			yellow: colors.yellow,
 			red: colors.red,
 			green: colors.green,
@@ -60,13 +53,6 @@ module.exports = {
 			full: "100%",
 		},
 	},
-	variants: {
-		extend: {
-			colors: {
-				zinc: colors.gray,
-				slate: colors.slate,
-			},
-		},
-	},
+	variants: {},
 	plugins: [],
 };
