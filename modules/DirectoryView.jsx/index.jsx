@@ -9,7 +9,6 @@ import {
 	AiFillFolder,
 	AiFillFolderOpen,
 } from "react-icons/ai";
-import router from "next/router";
 import {
 	FileIconByName,
 	CloseIcon,
@@ -21,6 +20,7 @@ import {
 import colors from "utils/config/colors";
 import { addActiveFile, addActiveFiles } from "redux/slice";
 import { batch } from "react-redux";
+import { toast } from "react-toastify";
 import DeleteDirFileDialog from "./DeleteDirFileDialog";
 
 const DirectoryView = () => {
@@ -87,13 +87,13 @@ const DirectoryView = () => {
 	};
 
 	const findTargetDir = (nodes, newNode) => {
-		let nodesCopy ={ ...nodes };
+		let nodesCopy = { ...nodes };
 		nodesCopy.children.forEach((node) => {
 			if (node.name === selected && node.kind === "directory") {
 				if (!node.children) {
 					node.children = [];
 				}
-				return node.children.push(newNode);
+				return node?.children.push(newNode);
 			} else if (node.name !== selected && node.kind === "directory") {
 				findTargetDir(node, newNode);
 			} else if (node.name === selected && node.kind === "file") {
@@ -101,31 +101,35 @@ const DirectoryView = () => {
 				if (!parentNode.children) {
 					parentNode.children = [];
 				}
-				return parentNode.children.push(newNode);
+				return parentNode?.children.push(newNode);
 			}
 		});
 		return nodes;
 	};
 
 	const addFolder = () => {
+		let name = generateRandomName(false);
 		const newFolder = {
-			name: generateRandomName(false),
+			name,
 			kind: "directory",
 			children: [],
 		};
 		const finalTree = findTargetDir(repoTree, newFolder);
 		setRepoTree(finalTree);
+		toast.success(`Folder ${name} added`);
 	};
 
 	const addFile = () => {
+		let name = generateRandomName(false);
 		const newFile = {
-			name: generateRandomName(true),
+			name,
 			kind: "file",
 			modified: Date.now().toLocaleString(),
 			size: "1KB",
 		};
 		const finalTree = findTargetDir(repoTree, newFile);
 		setRepoTree(finalTree);
+		toast.success(`File ${name} added`);
 	};
 
 	const removeFile = (name) => {
@@ -188,7 +192,7 @@ const DirectoryView = () => {
 							return (
 								<div
 									key={`${item.name}_${index}`}
-									className={`flex justify-between items-center cursor-pointer text-gray-400 hover:text-gray-200 pl-8 my-1 ${
+									className={`flex justify-between items-center cursor-pointer gap-2 text-gray-400 hover:text-gray-200 pl-8 my-1 ${
 										activeFile === item.name ? "bg-gray-800" : "bg-gray-900"
 									}`}
 									onMouseEnter={() => setHoverId(item.name)}
@@ -202,7 +206,7 @@ const DirectoryView = () => {
 										<FileIconByName name={item.name} />
 										<p>{item.name}</p>
 									</div>
-									{hoverId === item.name && (
+									{/* {hoverId === item.name && (
 										<div
 											onClick={() =>
 												setShowDeleteDialog({
@@ -214,7 +218,7 @@ const DirectoryView = () => {
 										>
 											<CloseIcon />
 										</div>
-									)}
+									)} */}
 								</div>
 							);
 						else
@@ -237,7 +241,7 @@ const DirectoryView = () => {
 												)}
 												<p>{item.name}</p>
 											</div>
-											<div
+											{/* <div
 												onClick={(e) => {
 													e.stopPropagation();
 													setShowDeleteDialog({
@@ -248,7 +252,7 @@ const DirectoryView = () => {
 												}}
 											>
 												{hoverId == item.name && <CloseIcon />}
-											</div>
+											</div> */}
 										</div>
 									}
 									className={styles.folderItem}
@@ -290,26 +294,24 @@ const DirectoryView = () => {
 					</Tooltip>
 				</div>
 			</div>
-			<div className="p-4">
-				<TreeView
-					aria-label="controlled"
-					expanded={expanded}
-					selected={selected}
-					defaultCollapseIcon={<CloseFolderIcon />}
-					defaultExpandIcon={<OutlineRightIcon />}
-					onNodeToggle={handleToggle}
-					onNodeSelect={handleSelect}
-					className={styles.directoryTree}
-				>
-					<DirectoryTree tree={repoTree} />
-				</TreeView>
-			</div>
-			<DeleteDirFileDialog
+			<TreeView
+				aria-label="controlled"
+				expanded={expanded}
+				selected={selected}
+				defaultCollapseIcon={<CloseFolderIcon />}
+				defaultExpandIcon={<OutlineRightIcon />}
+				onNodeToggle={handleToggle}
+				onNodeSelect={handleSelect}
+				className={styles.directoryTree}
+			>
+				<DirectoryTree tree={repoTree} />
+			</TreeView>
+			{/* <DeleteDirFileDialog
 				removeDir={removeDir}
 				removeFile={removeFile}
 				showDeleteDialog={showDeleteDialog}
 				setShowDeleteDialog={setShowDeleteDialog}
-			/>
+			/> */}
 		</div>
 	);
 };

@@ -16,7 +16,7 @@ const Home = () => {
 
 	const closeActiveFile = (fileName) => {
 		batch(() => {
-			let finalActiveFiles = activeFiles.filter((item) =>
+			let finalActiveFiles = [...activeFiles].filter((item) =>
 				item !== fileName ? true : false
 			);
 			dispatch(addActiveFile(finalActiveFiles.length === 0 ? "" : fileName));
