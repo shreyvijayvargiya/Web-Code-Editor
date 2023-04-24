@@ -1,6 +1,4 @@
-# 2023 Full Stack Frontend Repository
-
-## Web application IDE
+# Web application IDE
 
 ## Demo
 Here is the live [demo](https://web-code-editor-sage.vercel.app/) of the application
