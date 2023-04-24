@@ -24,6 +24,8 @@ The repository structure is explained as follows - 
 - **components** contain the wrapper or root code for each page 
 - **modules** contain reusable codebases or packages throughout the application utils contain the third-party configurations, colours, themes
 - **redux** contains state management it can be anything
+We can modify the architechture in future according to our need/requirements and all we need is to take care of entire developer experience and developer 
+flow for our repository as it should not be hindered.
 
 ## Repository Flow
 We have one home page containing the sidebar with the repository tree and the body containing the files the developer has opened.
@@ -35,7 +37,7 @@ Most of the reusable codebase will be defined inside modules directory to make i
 ## Themeing
 In order to follow a single theme throughout the application, I've defined the predefined colours from tailwind css inside utils/config directory. 
 
-Every developer providing any type of colour should import colors from the utils directory in order to avoid consistency in the repository.
+Every developer providing any type of colour should import colors from the utils directory in order to follow consistency in the repository.
 
 In future, we just have to change the colours inside `config` directory to change the theme of the entire application.
 
@@ -55,7 +57,9 @@ For example, we can easily write test cases separately for the DirectoryTree com
 - React Icons
 
 ## Suggestions & Best practises
-Tailwind and Material UI is the developer choice but as far as I knowledge using both together provides a better developer experience. Of course, we can prefer Mantine dev with Tailwind CSS as it makes it easier to customise UI components using tailwind css inline styles.
+Tailwind and Material UI is the developer choice but as far as in my knowledge using them together provides a better developer experience. We can prefer Mantine dev with Tailwind CSS as it makes it easier to customise UI components using tailwind css inline styles.
+
+Redux is a good choice for large size application because of caching, persisted data and large community.
 
 Still more best practices can be followed to make repository perfect and scalable.
 - Naming conventions can be more self-explanatory
@@ -63,5 +67,8 @@ Still more best practices can be followed to make repository perfect and scalabl
 - Env configurations for dev and prod environment to make development a cakewalk
 - Performance optimisation by avoiding re-rendering of file structure 
 
+For drag and drop functionality I'll personally prefer react dnd npm package because of large community. I've experience with react dnd and this is the demo project, I didn't get much time otherwise would have added drag drop also.
+
+Lastly, some code might be commented one because I was adding delete file/folder functionality along with a Dialog asking developer for confirmation to remove file/folder. 
 
 
