@@ -87,24 +87,30 @@ const DirectoryView = () => {
 	};
 
 	const findTargetDir = (nodes, newNode) => {
-		let nodesCopy = { ...nodes };
-		nodesCopy.children.forEach((node) => {
-			if (node.name === selected && node.kind === "directory") {
-				if (!node.children) {
-					node.children = [];
+		let nodesCopy = JSON.parse(JSON.stringify(nodes));
+		if (!selected) {
+			nodesCopy.children.push(newNode);
+		} else {
+			nodesCopy.children.forEach((node) => {
+				if (node.name === selected && node.kind === "directory") {
+					if (!node.children) {
+						node.children = [];
+					}
+					node.children.push(newNode);
+					return node;
+				} else if (node.name === selected && node.kind === "file") {
+					let parentNode = getParentNode(nodes, node.name);
+					if (!parentNode.children) {
+						parentNode.children = [];
+					}
+					parentNode.children.push(newNode);
+					return parentNode;
+				} else if (node.name !== selected && node.kind === "directory") {
+					findTargetDir(node);
 				}
-				return node?.children.push(newNode);
-			} else if (node.name !== selected && node.kind === "directory") {
-				findTargetDir(node, newNode);
-			} else if (node.name === selected && node.kind === "file") {
-				const parentNode = getParentNode(nodesCopy, selected);
-				if (!parentNode.children) {
-					parentNode.children = [];
-				}
-				return parentNode?.children.push(newNode);
-			}
-		});
-		return nodes;
+			});
+		}
+		return nodesCopy;
 	};
 
 	const addFolder = () => {
