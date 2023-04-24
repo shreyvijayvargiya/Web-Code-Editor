@@ -16,12 +16,11 @@ const Home = () => {
 
 	const closeActiveFile = (fileName) => {
 		batch(() => {
-			dispatch(addActiveFile(fileName));
-			dispatch(
-				addActiveFiles(
-					activeFiles.filter((item) => (item !== fileName ? true : false))
-				)
+			let finalActiveFiles = activeFiles.filter((item) =>
+				item !== fileName ? true : false
 			);
+			dispatch(addActiveFile(finalActiveFiles.length === 0 ? "" : fileName));
+			dispatch(addActiveFiles(finalActiveFiles));
 		});
 	};
 
@@ -41,7 +40,9 @@ const Home = () => {
 								className={`flex justify-start items-center gap-2 text-gray-400 hover:text-gray-100 max-w-xl overflow-x-scroll p-2 cursor-pointer ${
 									activeFile === item ? "bg-gray-800" : "bg-transparent"
 								}`}
-								onClick={() => {
+								key={item}
+								onClick={(e) => {
+									e.preventDefault();
 									dispatch(addActiveFile(item));
 								}}
 							>
@@ -49,7 +50,7 @@ const Home = () => {
 								<p>{item}</p>
 								<IconButton
 									onClick={(e) => {
-										e.preventDefault();
+										e.stopPropagation();
 										closeActiveFile(item);
 									}}
 								>
@@ -69,7 +70,7 @@ export const useStyles = makeStyles((theme) => ({
 	bodyContainer: {
 		width: "100%",
 		position: "fixed",
-		top: "-3px",
+		top: "3px",
 		bottom: "0px",
 		transform: (props) =>
 			!props.showSidebar ? "translateX(0)" : "translateX(20%)",

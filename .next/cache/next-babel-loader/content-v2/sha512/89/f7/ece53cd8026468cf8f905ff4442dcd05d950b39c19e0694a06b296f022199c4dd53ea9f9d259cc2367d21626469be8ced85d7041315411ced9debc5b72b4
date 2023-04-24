@@ -1,0 +1,1 @@
+{"ast":null,"code":"export { default as Body } from \"./Body\";","map":{"version":3,"sources":["/Users/shreyvijayvargiya/Desktop/Project/Web-Code-Editor/modules/index.jsx"],"names":["default","Body"],"mappings":"AAAA,SAASA,OAAO,IAAIC,IAApB,QAAgC,QAAhC","sourcesContent":["export { default as Body } from \"./Body\";\n"]},"metadata":{},"sourceType":"module"}

@@ -1,44 +1,18 @@
 import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
 import { IconButton, Tooltip } from "@mui/material";
-import { makeStyles } from "@mui/styles";
-import { TreeView, TreeItem } from "@mui/lab";
-import {
-	AiFillFolderAdd,
-	AiFillFileAdd,
-	AiFillFolder,
-	AiFillFolderOpen,
-} from "react-icons/ai";
+import { AiFillFolderAdd, AiFillFileAdd } from "react-icons/ai";
 import router from "next/router";
-import {
-	FileIconByName,
-	CloseIcon,
-	ExpandIcon,
-	CollapseIcon,
-	CloseFolderIcon,
-	OutlineRightIcon,
-} from "../UI/Icons";
+import { ExpandIcon, CollapseIcon } from "../UI/Icons";
 import colors from "utils/config/colors";
-import { addActiveFile, addActiveFiles } from "redux/slice";
-import { batch } from "react-redux";
+import { useSelector } from "react-redux";
+import DirectoryTree from "./DirectoryTree";
 
 const DirectoryView = () => {
-	const dispatch = useDispatch();
-	const { activeFiles, initialRepoTree, activeFile } = useSelector(
-		(state) => state
-	);
-	const [expanded, setExpanded] = useState([]);
-	const [repoTree, setRepoTree] = useState(initialRepoTree);
-	const [selected, setSelected] = useState([]);
-	const [hoverId, setHoverId] = useState();
-	const [openedFile, setOpenedFile] = useState(activeFiles);
+	const { initialRepoTree } = useSelector((state) => state);
 
-	const handleToggle = (event, nodeIds) => {
-		setExpanded(nodeIds);
-	};
-	const handleSelect = (event, nodeIds) => {
-		setSelected(nodeIds);
-	};
+	const [repoTree, setRepoTree] = useState(initialRepoTree);
+	const [expanded, setExpanded] = useState([]);
+	const [selected, setSelected] = useState([]);
 
 	const handleExpandClick = () => {
 		if (expanded.length === 0) {
@@ -80,14 +54,15 @@ const DirectoryView = () => {
 		}
 		return null;
 	};
-
+	
 	const findTargetDir = (nodes, newNode) => {
 		nodes.children.forEach((node) => {
 			if (node.name === selected && node.kind === "directory") {
 				if (!node.children) {
 					node.children = [];
 				}
-				return node.children.push(newNode);
+				const newChildren = [...node.children,  newNode];
+				return Object.defineProperty(node, "children", { value: newChildren });
 			} else if (node.name !== selected && node.kind === "directory") {
 				findTargetDir(node, newNode);
 			} else if (node.name === selected && node.kind === "file") {
@@ -95,7 +70,8 @@ const DirectoryView = () => {
 				if (!parentNode.children) {
 					parentNode.children = [];
 				}
-				return parentNode.children.push(newNode);
+				const newChildren = [...parentNode.children, newNode];
+				return Object.defineProperty(parentNode, "children", { value: newChildren })
 			}
 		});
 		return nodes;
@@ -107,7 +83,8 @@ const DirectoryView = () => {
 			kind: "directory",
 			children: [],
 		};
-		const finalTree = findTargetDir(repoTree, newFolder);
+		let tree = repoTree;
+		const finalTree = findTargetDir(tree, newFolder);
 		setRepoTree(finalTree);
 	};
 
@@ -118,138 +95,15 @@ const DirectoryView = () => {
 			modified: Date.now().toLocaleString(),
 			size: "1KB",
 		};
-		const finalTree = findTargetDir(repoTree, newFile);
+		let tree = repoTree;
+		const finalTree = findTargetDir(tree, newFile);
 		setRepoTree(finalTree);
 	};
 
-	const removeFile = (name) => {
-		function removeNodeByName(node) {
-			if (!node || !node.children) {
-				return false;
-			}
-			const index = node.children.findIndex((child) => child?.name === name);
-			if (index > -1) {
-				node.children.splice(index, 1);
-				return true;
-			}
-
-			for (const child of node.children) {
-				if (removeNodeByName(child, name)) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-		removeNodeByName(repoTree);
-	};
-
-	const removeDir = (name) => {
-		function removeDirectory(tree) {
-			if (tree.children) {
-				tree.children = tree?.children.filter((node) => {
-					if (node.kind === "directory" && node.name === name) {
-						return false;
-					} else {
-						return removeDirectory(node);
-					}
-				});
-			}
-			return tree;
-		}
-		removeDirectory(repoTree);
-	};
-
-	const styles = useStyles();
-
-	const openFileInEditor = (name) => {
-		let data = [...openedFile];
-		if(!openedFile.includes(name)) {
-			data.push(name)
-		}
-		setOpenedFile(data);
-		batch(() => {
-			dispatch(addActiveFile(name));
-			dispatch(addActiveFiles(data));
-		})
-	};
-
-	const DirectoryTree = ({ tree }) => {
-		return (
-			<>
-				{tree?.children &&
-					tree?.children.map((item, index) => {
-						if (item.kind === "file")
-							return (
-								<div
-									key={`${item.name}_${index}`}
-									className={`flex justify-between items-center cursor-pointer text-gray-400 hover:text-gray-200 pl-8 my-1 ${activeFile === item.name ? "bg-gray-800": "bg-gray-900"}`}
-									onMouseEnter={() => setHoverId(item.name)}
-									onMouseLeave={() => setHoverId(null)}
-									onClick={(e) => {
-										e.preventDefault();
-										openFileInEditor(item.name);
-									}}
-								>
-									<div className="flex justify-start items-center gap-1">
-										<FileIconByName name={item.name} />
-										<p>{item.name}</p>
-									</div>
-									{hoverId === item.name && (
-										<div onClick={() => removeFile(item.name)}>
-											<CloseIcon />
-										</div>
-									)}
-								</div>
-							);
-						else
-							return (
-								<TreeItem
-									key={item.name}
-									nodeId={item.name}
-									onMouseEnter={() => setHoverId(item.name)}
-									onMouseLeave={() => setHoverId(null)}
-									label={
-										<div className="flex justify-between items-center w-full">
-											<div className="flex justify-start items-center gap-1">
-												{expanded.includes(item.name) ? (
-													<AiFillFolderOpen
-														size={20}
-														color={colors.blue[400]}
-													/>
-												) : (
-													<AiFillFolder size={20} color={colors.blue[400]} />
-												)}
-												<p>{item.name}</p>
-											</div>
-											<div
-												onClick={(e) => {
-													e.stopPropagation();
-													removeDir(item.name);
-												}}
-											>
-												{hoverId == item.name && <CloseIcon />}
-											</div>
-										</div>
-									}
-									className={styles.folderItem}
-								>
-									<DirectoryTree tree={item} />
-								</TreeItem>
-							);
-					})}
-			</>
-		);
-	};
 	return (
 		<div className="text-gray-200 w-full">
-			<div className="p-2">
-				<p className="text-xl cursor-pointer" onClick={() => router.push("/")}>
-					Repository
-				</p>
-			</div>
-			<div className="flex justify-between items-center p-4 border-t border-b border-gray-800">
-				<p>Ignite Assignment</p>
+			<div className="flex justify-between items-center p-2 border-t border-b border-gray-800">
+				<p>Web Code IDE</p>
 				<div className="flex justify-evenly items-center">
 					<Tooltip title="Add file">
 						<IconButton>
@@ -276,33 +130,15 @@ const DirectoryView = () => {
 					</Tooltip>
 				</div>
 			</div>
-			<div className="p-4">
-				<TreeView
-					aria-label="controlled"
-					expanded={expanded}
-					selected={selected}
-					defaultCollapseIcon={<CloseFolderIcon />}
-					defaultExpandIcon={<OutlineRightIcon />}
-					onNodeToggle={handleToggle}
-					onNodeSelect={handleSelect}
-					className={styles.directoryTree}
-				>
-					<DirectoryTree tree={repoTree} />
-				</TreeView>
-			</div>
+			<DirectoryTree
+				repoTree={repoTree}
+				expanded={expanded}
+				selected={selected}
+				setRepoTree={setRepoTree}
+				setExpanded={setExpanded}
+				setSelected={setSelected}
+			/>
 		</div>
 	);
 };
 export default DirectoryView;
-
-export const useStyles = makeStyles(() => ({
-	folderItem: {
-		"& .css-1kylpgj-MuiTreeItem-content.Mui-selected:hover": {
-			backgroundColor: colors.gray[800],
-		},
-		"& .css-1kylpgj-MuiTreeItem-content.Mui-selected": {
-			backgroundColor: colors.gray[800],
-		},
-	},
-	directoryTree: {},
-}));
