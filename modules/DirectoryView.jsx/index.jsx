@@ -91,22 +91,14 @@ const DirectoryView = () => {
 		if (!selected) {
 			nodesCopy.children.push(newNode);
 		} else {
-			nodesCopy.children.forEach((node) => {
+			nodesCopy.children = nodesCopy?.children?.map((node) => {
 				if (node.name === selected && node.kind === "directory") {
-					if (!node.children) {
-						node.children = [];
-					}
 					node.children.push(newNode);
 					return node;
-				} else if (node.name === selected && node.kind === "file") {
-					let parentNode = getParentNode(nodes, node.name);
-					if (!parentNode.children) {
-						parentNode.children = [];
-					}
-					parentNode.children.push(newNode);
-					return parentNode;
-				} else if (node.name !== selected && node.kind === "directory") {
-					findTargetDir(node);
+				} else if (node.kind === "directory" && node.name !== selected) {
+					return findTargetDir(node, newNode);
+				} else {
+					return node;
 				}
 			});
 		}
