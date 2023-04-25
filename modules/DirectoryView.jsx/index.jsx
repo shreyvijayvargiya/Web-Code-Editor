@@ -243,7 +243,7 @@ const DirectoryView = () => {
 												)}
 												<p>{item.name}</p>
 											</div>
-											{/* <div
+											<div
 												onClick={(e) => {
 													e.stopPropagation();
 													setShowDeleteDialog({
@@ -254,7 +254,7 @@ const DirectoryView = () => {
 												}}
 											>
 												{hoverId == item.name && <CloseIcon />}
-											</div> */}
+											</div>
 										</div>
 									}
 									className={styles.folderItem}
@@ -308,12 +308,12 @@ const DirectoryView = () => {
 			>
 				<DirectoryTree tree={repoTree} />
 			</TreeView>
-			{/* <DeleteDirFileDialog
+			<DeleteDirFileDialog
 				removeDir={removeDir}
 				removeFile={removeFile}
 				showDeleteDialog={showDeleteDialog}
 				setShowDeleteDialog={setShowDeleteDialog}
-			/> */}
+			/>
 		</div>
 	);
 };
