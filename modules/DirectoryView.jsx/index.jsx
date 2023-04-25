@@ -152,20 +152,24 @@ const DirectoryView = () => {
 		removeNodeByName(repoTree);
 	};
 
-	const removeDir = (name) => {
-		function removeDirectory(tree) {
-			if (tree.children) {
-				tree.children = tree?.children.filter((node) => {
-					if (node.kind === "directory" && node.name === name) {
-						return false;
-					} else {
-						return removeDirectory(node);
-					}
-				});
-			}
-			return tree;
+	function removeDirectory(tree, name) {
+		let treeCopy = JSON.parse(JSON.stringify(tree));
+		if (treeCopy.children){
+			treeCopy.children = treeCopy.children = treeCopy.children.filter(
+				(child) => {
+					return child.name !== name || child.kind !== "directory";
+				}
+			);
+		treeCopy.children = treeCopy.children.map((child) => {
+			return removeDirectory(child, name);
+		});
 		}
-		removeDirectory(repoTree);
+		return treeCopy;
+	}
+	const removeDir = (name) => {
+		const finalTree = removeDirectory(repoTree, name);
+		setRepoTree(finalTree);
+		setShowDeleteDialog({ open: false, name: null, kind: null });
 	};
 
 	const styles = useStyles();
