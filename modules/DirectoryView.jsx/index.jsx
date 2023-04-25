@@ -130,26 +130,26 @@ const DirectoryView = () => {
 		toast.success(`File ${name} added`);
 	};
 
-	const removeFile = (name) => {
-		function removeNodeByName(node) {
-			if (!node || !node.children) {
-				return false;
-			}
-			const index = node.children.findIndex((child) => child?.name === name);
-			if (index > -1) {
-				node.children.splice(index, 1);
-				return true;
-			}
-
-			for (const child of node.children) {
-				if (removeNodeByName(child, name)) {
-					return true;
-				}
-			}
-
-			return false;
+	function removeFileByName(root, fileName) {
+		let rootCopy = JSON.parse(JSON.stringify(root));
+		if (rootCopy.kind === "file" && rootCopy.name === fileName) {
+			return null;
 		}
-		removeNodeByName(repoTree);
+		if (rootCopy.kind === "directory") {
+			rootCopy.children = rootCopy.children.filter((child) => {
+				return child.kind === "directory" || child.name !== fileName;
+			});
+
+			rootCopy.children.forEach((child) => {
+				removeFileByName(child, fileName);
+			});
+		}
+		return rootCopy;
+	}
+	const removeFile = (name) => {
+		const finalTree = removeFileByName(repoTree, name);
+		setRepoTree(finalTree);
+		setShowDeleteDialog({ open: false, name: null, kind: null });
 	};
 
 	function removeDirectory(tree, name) {
@@ -208,7 +208,7 @@ const DirectoryView = () => {
 										<FileIconByName name={item.name} />
 										<p>{item.name}</p>
 									</div>
-									{/* {hoverId === item.name && (
+									{hoverId === item.name && (
 										<div
 											onClick={() =>
 												setShowDeleteDialog({
@@ -220,7 +220,7 @@ const DirectoryView = () => {
 										>
 											<CloseIcon />
 										</div>
-									)} */}
+									)}
 								</div>
 							);
 						else
