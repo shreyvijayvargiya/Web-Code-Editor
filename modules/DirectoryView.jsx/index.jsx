@@ -18,6 +18,7 @@ import {
 	OutlineRightIcon,
 } from "../UI/Icons";
 import colors from "utils/config/colors";
+import { treeData } from "utils/config/tree";
 import { addActiveFile, addActiveFiles } from "redux/slice";
 import { batch } from "react-redux";
 import { toast } from "react-toastify";
@@ -30,7 +31,7 @@ const DirectoryView = () => {
 	);
 	const [expanded, setExpanded] = useState([]);
 	const [repoTree, setRepoTree] = useState(initialRepoTree);
-	const [selected, setSelected] = useState([]);
+	const [selected, setSelected] = useState("");
 	const [hoverId, setHoverId] = useState();
 	const [showDeleteDialog, setShowDeleteDialog] = useState({
 		open: false,
@@ -87,24 +88,34 @@ const DirectoryView = () => {
 	};
 
 	const findTargetDir = (nodes, newNode) => {
-		let nodesCopy = { ...nodes };
-		nodesCopy.children.forEach((node) => {
-			if (node.name === selected && node.kind === "directory") {
-				if (!node.children) {
-					node.children = [];
+		let nodesCopy = JSON.parse(JSON.stringify(nodes));
+		if (!selected) {
+			nodesCopy.children.push(newNode);
+		} else {
+			nodesCopy.children = nodesCopy?.children?.map((node) => {
+				if (node.name === selected && node.kind === "directory") {
+					if (expanded.length === 0) {
+						setExpanded([node.name]);
+					} else {
+						const findIndex = expanded.indexOf(node.name);
+						let expandedCopy = [...expanded];
+						if(findIndex > -1){
+							expandedCopy.push(node.name)
+							setExpanded(expandedCopy)
+						}else {
+							setExpanded(expandedCopy);
+						}
+					}
+					node.children.push(newNode);
+					return node;
+				} else if (node.kind === "directory" && node.name !== selected) {
+					return findTargetDir(node, newNode);
+				} else {
+					return node;
 				}
-				return node?.children.push(newNode);
-			} else if (node.name !== selected && node.kind === "directory") {
-				findTargetDir(node, newNode);
-			} else if (node.name === selected && node.kind === "file") {
-				const parentNode = getParentNode(nodesCopy, selected);
-				if (!parentNode.children) {
-					parentNode.children = [];
-				}
-				return parentNode?.children.push(newNode);
-			}
-		});
-		return nodes;
+			});
+		}
+		return nodesCopy;
 	};
 
 	const addFolder = () => {
@@ -132,42 +143,46 @@ const DirectoryView = () => {
 		toast.success(`File ${name} added`);
 	};
 
-	const removeFile = (name) => {
-		function removeNodeByName(node) {
-			if (!node || !node.children) {
-				return false;
-			}
-			const index = node.children.findIndex((child) => child?.name === name);
-			if (index > -1) {
-				node.children.splice(index, 1);
-				return true;
-			}
-
-			for (const child of node.children) {
-				if (removeNodeByName(child, name)) {
-					return true;
-				}
-			}
-
-			return false;
+	function removeFileByName(root, fileName) {
+		let rootCopy = JSON.parse(JSON.stringify(root));
+		if (rootCopy.kind === "file" && rootCopy.name === fileName) {
+			return null;
 		}
-		removeNodeByName(repoTree);
+		if (rootCopy.kind === "directory") {
+			rootCopy.children = rootCopy.children.filter((child) => {
+				return child.kind === "directory" || child.name !== fileName;
+			});
+
+			rootCopy.children.forEach((child) => {
+				removeFileByName(child, fileName);
+			});
+		}
+		return rootCopy;
+	}
+	const removeFile = (name) => {
+		const finalTree = removeFileByName(repoTree, name);
+		setRepoTree(finalTree);
+		setShowDeleteDialog({ open: false, name: null, kind: null });
 	};
 
-	const removeDir = (name) => {
-		function removeDirectory(tree) {
-			if (tree.children) {
-				tree.children = tree?.children.filter((node) => {
-					if (node.kind === "directory" && node.name === name) {
-						return false;
-					} else {
-						return removeDirectory(node);
-					}
-				});
-			}
-			return tree;
+	function removeDirectory(tree, name) {
+		let treeCopy = JSON.parse(JSON.stringify(tree));
+		if (treeCopy.children) {
+			treeCopy.children = treeCopy.children = treeCopy.children.filter(
+				(child) => {
+					return child.name !== name || child.kind !== "directory";
+				}
+			);
+			treeCopy.children = treeCopy.children.map((child) => {
+				return removeDirectory(child, name);
+			});
 		}
-		removeDirectory(repoTree);
+		return treeCopy;
+	}
+	const removeDir = (name) => {
+		const finalTree = removeDirectory(repoTree, name);
+		setRepoTree(finalTree);
+		setShowDeleteDialog({ open: false, name: null, kind: null });
 	};
 
 	const styles = useStyles();
@@ -188,7 +203,7 @@ const DirectoryView = () => {
 			<>
 				{tree?.children &&
 					tree?.children.map((item, index) => {
-						if (item.kind === "file")
+						if (item?.kind === "file")
 							return (
 								<div
 									key={`${item.name}_${index}`}
@@ -199,6 +214,7 @@ const DirectoryView = () => {
 									onMouseLeave={() => setHoverId(null)}
 									onClick={(e) => {
 										e.preventDefault();
+										setSelected(item.name);
 										openFileInEditor(item.name);
 									}}
 								>
@@ -206,7 +222,7 @@ const DirectoryView = () => {
 										<FileIconByName name={item.name} />
 										<p>{item.name}</p>
 									</div>
-									{/* {hoverId === item.name && (
+									{hoverId === item.name && (
 										<div
 											onClick={() =>
 												setShowDeleteDialog({
@@ -218,7 +234,7 @@ const DirectoryView = () => {
 										>
 											<CloseIcon />
 										</div>
-									)} */}
+									)}
 								</div>
 							);
 						else
@@ -241,9 +257,10 @@ const DirectoryView = () => {
 												)}
 												<p>{item.name}</p>
 											</div>
-											{/* <div
+											<div
 												onClick={(e) => {
 													e.stopPropagation();
+													setSelected(item.name);
 													setShowDeleteDialog({
 														open: true,
 														kind: "directory",
@@ -252,7 +269,7 @@ const DirectoryView = () => {
 												}}
 											>
 												{hoverId == item.name && <CloseIcon />}
-											</div> */}
+											</div>
 										</div>
 									}
 									className={styles.folderItem}
@@ -306,12 +323,12 @@ const DirectoryView = () => {
 			>
 				<DirectoryTree tree={repoTree} />
 			</TreeView>
-			{/* <DeleteDirFileDialog
+			<DeleteDirFileDialog
 				removeDir={removeDir}
 				removeFile={removeFile}
 				showDeleteDialog={showDeleteDialog}
 				setShowDeleteDialog={setShowDeleteDialog}
-			/> */}
+			/>
 		</div>
 	);
 };
